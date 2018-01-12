@@ -29,22 +29,40 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.post('/api/task', function( request, response) {
+app.get('/api/tasks', function( request, response) {
+  pool.connect(function (err, db, done) {
+    if(err) {
+      return response.status(400).send(err)
+    } else {
+      db.query('SELECT * FROM todos', function(err, table) {
+        done();
+        if(err) {
+          return response.status(400).send(err)
+        } else {
+          return response.status(200).send(table.rows)
+        }
+      })
+    }
+  })
+
+})
+app.post('/api/tasks', function( request, response) {
   // console.log(request.body);
   var title = request.body.title;
-  var id = Math.floor(Math.random() * 150);
+  var id = request.body.id;
   let values = [title, id]
   pool.connect((err, db, done) => {
     if(err) {
-      return console.log(err)
+      return response.status(400).send(err);
     } else {
   
       db.query('INSERT INTO todos (title, id) VALUES ($1, $2)', [...values], (err, table) => { done();
         if(err){
-          return console.log(err)
+          return response.status(400).send(err);
         } else {
           console.log('DATA INSERTED');
           db.end();
+          response.status(201).send({message: 'Task added!'});
         }
       })
     }
