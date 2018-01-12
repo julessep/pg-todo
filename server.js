@@ -2,6 +2,7 @@ let express = require('express');
 let bodyParser = require('body-parser');
 let morgan = require('morgan');
 let pg = require('pg');
+let cors = require('cors');
 const PORT = 3000;
 
 
@@ -17,6 +18,7 @@ let pool = new pg.Pool({
 
 
 let app = express();
+app.use(cors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -61,12 +63,27 @@ app.post('/api/tasks', function( request, response) {
           return response.status(400).send(err);
         } else {
           console.log('DATA INSERTED');
-          db.end();
           response.status(201).send({message: 'Task added!'});
         }
       })
     }
   });
+}); 
+app.delete('/api/remove/:id', function( request, response) {
+  var id = request.params.id;
+  pool.connect(function(err, db, done) {
+    if(err){
+      return response.status(400).send(err)
+    } else {
+      db.query('DELETE FROM todos WHERE id= $1', [id], function(err, result) {
+        if(err){
+          return response.status(400).send(err);
+        } else {
+          response.status(201).send({message: 'Task deleted!'});
+        }
+      })
+  }
+});
 }); 
 
 app.listen(PORT, () => console.log('Listening on port ' + PORT));
