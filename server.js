@@ -11,26 +11,10 @@ let pool = new pg.Pool({
   password: '2288',
   host: 'localhost',
   port: 5432,
-  max: 100,
+  max: 1000,
   idleTimeoutMillis: 30000,
 })
 
-// pool.connect((err, db, done) => {
-//   if(err) {
-//     return console.log(err);
-//   } else {
-
-//     db.query('SELECT * FROM todos', (err, table) => { done();
-//       if(err){
-//         return console.log(err)
-//       } else {
-//         console.log(table.rows);
-//         db.end();
-//         response.status(201).send({message: 'Data inserted!'});
-//       }
-//     })
-//   }
-// });
 
 let app = express();
 
@@ -45,5 +29,26 @@ app.use(function(req, res, next) {
   next();
 });
 
+app.post('/api/task', function( request, response) {
+  // console.log(request.body);
+  var title = request.body.title;
+  var id = Math.floor(Math.random() * 150);
+  let values = [title, id]
+  pool.connect((err, db, done) => {
+    if(err) {
+      return console.log(err)
+    } else {
+  
+      db.query('INSERT INTO todos (title, id) VALUES ($1, $2)', [...values], (err, table) => { done();
+        if(err){
+          return console.log(err)
+        } else {
+          console.log('DATA INSERTED');
+          db.end();
+        }
+      })
+    }
+  });
+}); 
 
 app.listen(PORT, () => console.log('Listening on port ' + PORT));
